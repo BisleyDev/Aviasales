@@ -6,17 +6,17 @@ const formSearsh = (document.querySelector('.form-search')),
     inputDateDepart = formSearsh.querySelector('.input__date-depart');
 
 //Данные 
-const citiesApi = 'http://api.travelpayouts.com/data/ru/cities.json';  // dataBase/cities.json  - ервер
-const proxy = 'https://cors-anywhere.herokuapp.com/';
-const API_KEY = 'c84e09dbb5ccdc86c89f1e10b583fff7';
-const calendar = 'http://min-prices.aviasales.ru/calendar_preload';
+
+// dataBase/cities.json  - сервер  http://api.travelpayouts.com/data/ru/cities.json
+const citiesApi = 'dataBase/cities.json',  
+    proxy = 'https://cors-anywhere.herokuapp.com/',
+    API_KEY = 'c84e09dbb5ccdc86c89f1e10b583fff7',
+    calendar = 'http://min-prices.aviasales.ru/calendar_preload';
 
 
 
 
 let city = [];
-
-
 
 
 // Ф-ция получения данных с сервера
@@ -32,7 +32,7 @@ const getData = (url, callback) => {
             callback(request.response);
         } else {
             console.error(request.status);
-        }
+        };
     });
 
     request.send();
@@ -69,10 +69,33 @@ const downList = (city, list) => {
         if (target.tagName.toLowerCase() === 'li') {
             city.value = target.textContent;
             list.textContent = '';
-        }
+        };
     });
 };
 
+const renderCheapDay = (cheapTicket) => {
+    console.log(cheapTicket);
+};
+
+const renderCheapYear = (cheapTickets) => {
+    console.log(cheapTickets);
+};
+
+
+const renderCheap = (data, date) => {
+    const cheapTicketYear = JSON.parse(data).best_prices;
+
+    
+    const cheapTicketDay = cheapTicketYear.filter((item) => {
+        return item.depart_date === date;
+
+    });
+
+
+
+    renderCheapDay(cheapTicketDay);
+    renderCheapYear(cheapTicketYear);
+};
 
 //Обработчики событий
 inputCitiesFrom.addEventListener('input', () => {
@@ -84,11 +107,52 @@ inputCitiesTo.addEventListener('input', () => {
     downList(inputCitiesTo, dropdownCitiesTo);
 });
 
+formSearsh.addEventListener('submit', (event) => {
+    event.preventDefault()
 
-// Вызовы функции
-getData(proxy + citiesApi, (data) => {
+    const cityFrom = city.find((item) => {
+        return inputCitiesFrom.value === item.name
+    });
+    
+    const cityTo = city.find((item) => {
+        return inputCitiesTo.value === item.name
+    });
+
+    const formData = {
+        from: cityFrom.code,
+        to: cityTo.code,
+        when: inputDateDepart.value,
+    };
+
+/*     'https://support.travelpayouts.com/hc/ru/articles/203972143-API-
+    %D0%BA%D0%B0%D0%BB%D0%B5%D0%BD%D0%B4%D0%B0%D1%80%D1%8F-%D1%86%D0%B5%D0%BD'  откуда взяты Api*/
+    // requestData - запись по новой(интерполяция) и ниже в старой форме
+    const requestData = `?depart_date=${formData.when}&origin=${formData.from}&destination=${formData.to}&one_way=true&token=`;
+
+
+
+    const requestData2 = '?depart_date=' + formData.when +
+    '&origin=' + formData.from +
+    '&destination=' + formData.to +
+    '&one_way=true&token=' + API_KEY;
+
+    getData(proxy + calendar + requestData, (response) => {
+        renderCheap(response, formData.when);
+    });
+})
+
+
+// Вызовы функции  (если с сервера то (proxy + citiesApi))
+
+
+getData(citiesApi, (data) => {
+    city = JSON.parse(data).filter(item => item.name)    
+});
+
+
+
+/* getData(proxy + citiesApi, (data) => {
     city = JSON.parse(data).filter((item) => {
         return item.name;
     });
-
-});
+}); */
